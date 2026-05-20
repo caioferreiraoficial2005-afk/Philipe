@@ -5,7 +5,7 @@
 /* ---- Scroll Frame Sequence ---- */
 (function () {
   var TOTAL_FRAMES = 100;
-  var isMobile     = window.matchMedia('(max-width: 768px)').matches;
+  var isMobile     = window.innerWidth <= 1024;
   var BASE_PATH    = isMobile
     ? 'assets/instalacao_celular/extracted/'
     : 'assets/frames_hero/extracted/';
