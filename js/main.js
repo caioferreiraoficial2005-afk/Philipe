@@ -19,6 +19,9 @@
   var img       = document.getElementById('frame-img');
   if (!container || !img || !stickyEl) return;
 
+  /* Corrige o primeiro frame imediatamente — evita flash do frame de PC no mobile */
+  img.src = frameSrc(1);
+
   /* Phase elements */
   var phase1 = document.getElementById('phase-1');
   var phase2 = document.getElementById('phase-2');
@@ -28,9 +31,15 @@
   var PHASE2_END = 0.66;
   var FADE_START = 0.88;
 
-  /* Pre-load all frames in small batches so the browser doesn't choke */
   var frames = new Array(TOTAL_FRAMES + 1);
-  var BATCH  = 10;
+  var BATCH  = 8;
+
+  /* Carrega os primeiros 20 frames imediatamente (sem delay) para a animação inicial */
+  var PRELOAD_INIT = 20;
+  for (var pi = 1; pi <= Math.min(PRELOAD_INIT, TOTAL_FRAMES); pi++) {
+    frames[pi] = new Image();
+    frames[pi].src = frameSrc(pi);
+  }
 
   function loadBatch(start) {
     var end = Math.min(start + BATCH, TOTAL_FRAMES + 1);
@@ -42,13 +51,14 @@
       }
     }
     if (end <= TOTAL_FRAMES) {
-      setTimeout(function () { loadBatch(end); }, 32);
+      setTimeout(function () { loadBatch(end); }, 60);
     }
   }
-  loadBatch(1);
+  loadBatch(PRELOAD_INIT + 1);
 
   var ticking      = false;
   var currentPhase = 0;
+  var lastFrameIdx = 0;
 
   function setPhase(phase) {
     if (phase === currentPhase) return;
@@ -67,8 +77,10 @@
 
     var idx = Math.min(TOTAL_FRAMES, Math.max(1, Math.round(progress * (TOTAL_FRAMES - 1)) + 1));
 
-    if (frames[idx] && frames[idx].complete && frames[idx].naturalWidth > 0) {
+    /* Só atualiza o src se o frame mudou — evita repaints desnecessários */
+    if (idx !== lastFrameIdx && frames[idx] && frames[idx].complete && frames[idx].naturalWidth > 0) {
       img.src = frames[idx].src;
+      lastFrameIdx = idx;
     }
 
     stickyEl.style.opacity = progress >= FADE_START
