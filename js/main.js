@@ -21,6 +21,9 @@
 
   /* Corrige o primeiro frame imediatamente — evita flash do frame de PC no mobile */
   img.src = frameSrc(1);
+  /* Desktop: decode síncrono garante renderização imediata sem gap entre frames.
+     Mobile: async evita bloquear a thread principal. */
+  img.decoding = isMobile ? 'async' : 'sync';
 
   /* Phase elements */
   var phase1 = document.getElementById('phase-1');
@@ -39,14 +42,20 @@
   var lastFrameIdx = 0;
   var pendingIdx   = 0; /* frame desejado mas ainda não carregado */
 
-  /* Cria um Image com callback: quando carregar, exibe se ainda for o frame pendente */
+  /* Cria um Image com callback: quando carregar, exibe se ainda for o frame pendente.
+     O rAF garante que a atualização só ocorre dentro do ciclo de renderização,
+     evitando renders intermediários fora de sincronia que causam piscadas. */
   function makeFrame(i) {
     var el = new Image();
     el.onload = function () {
       if (pendingIdx === i) {
-        img.src = el.src;
-        lastFrameIdx = i;
-        pendingIdx = 0;
+        requestAnimationFrame(function () {
+          if (pendingIdx === i) {
+            img.src = el.src;
+            lastFrameIdx = i;
+            pendingIdx = 0;
+          }
+        });
       }
     };
     el.src = frameSrc(i);
