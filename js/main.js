@@ -8,7 +8,7 @@
   var BASE_PATH    = 'assets/frames_hero/extracted/';
 
   function frameSrc(n) {
-    return BASE_PATH + String(n).padStart(3, '0') + '.png';
+    return BASE_PATH + String(n).padStart(3, '0') + '.jpg';
   }
 
   var container = document.getElementById('frame-container');
