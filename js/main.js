@@ -31,34 +31,43 @@
   var PHASE2_END = 0.66;
   var FADE_START = 0.88;
 
-  var frames = new Array(TOTAL_FRAMES + 1);
-  var BATCH  = 8;
-
-  /* Carrega os primeiros 20 frames imediatamente (sem delay) para a animação inicial */
+  var frames       = new Array(TOTAL_FRAMES + 1);
+  var BATCH        = 8;
   var PRELOAD_INIT = 20;
+  var ticking      = false;
+  var currentPhase = 0;
+  var lastFrameIdx = 0;
+  var pendingIdx   = 0; /* frame desejado mas ainda não carregado */
+
+  /* Cria um Image com callback: quando carregar, exibe se ainda for o frame pendente */
+  function makeFrame(i) {
+    var el = new Image();
+    el.onload = function () {
+      if (pendingIdx === i) {
+        img.src = el.src;
+        lastFrameIdx = i;
+        pendingIdx = 0;
+      }
+    };
+    el.src = frameSrc(i);
+    return el;
+  }
+
+  /* Primeiros 20 frames sem delay — prontos para a animação inicial */
   for (var pi = 1; pi <= Math.min(PRELOAD_INIT, TOTAL_FRAMES); pi++) {
-    frames[pi] = new Image();
-    frames[pi].src = frameSrc(pi);
+    frames[pi] = makeFrame(pi);
   }
 
   function loadBatch(start) {
     var end = Math.min(start + BATCH, TOTAL_FRAMES + 1);
     for (var i = start; i < end; i++) {
-      if (!frames[i]) {
-        var el = new Image();
-        el.src = frameSrc(i);
-        frames[i] = el;
-      }
+      if (!frames[i]) frames[i] = makeFrame(i);
     }
     if (end <= TOTAL_FRAMES) {
       setTimeout(function () { loadBatch(end); }, 60);
     }
   }
   loadBatch(PRELOAD_INIT + 1);
-
-  var ticking      = false;
-  var currentPhase = 0;
-  var lastFrameIdx = 0;
 
   function setPhase(phase) {
     if (phase === currentPhase) return;
@@ -77,10 +86,16 @@
 
     var idx = Math.min(TOTAL_FRAMES, Math.max(1, Math.round(progress * (TOTAL_FRAMES - 1)) + 1));
 
-    /* Só atualiza o src se o frame mudou — evita repaints desnecessários */
-    if (idx !== lastFrameIdx && frames[idx] && frames[idx].complete && frames[idx].naturalWidth > 0) {
-      img.src = frames[idx].src;
-      lastFrameIdx = idx;
+    if (idx !== lastFrameIdx) {
+      if (frames[idx] && frames[idx].complete && frames[idx].naturalWidth > 0) {
+        /* Frame pronto: exibe imediatamente */
+        img.src = frames[idx].src;
+        lastFrameIdx = idx;
+        pendingIdx = 0;
+      } else {
+        /* Frame ainda carregando: marca como pendente — o onload vai exibir quando pronto */
+        pendingIdx = idx;
+      }
     }
 
     stickyEl.style.opacity = progress >= FADE_START
