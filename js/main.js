@@ -7,8 +7,8 @@
   var TOTAL_FRAMES = 100;
   var isMobile     = window.innerWidth <= 1024;
   var BASE_PATH    = isMobile
-    ? 'assets/instalacao_celular/extracted/'
-    : 'assets/frames_hero/extracted/';
+    ? 'assets/celular/extracted/'
+    : 'assets/pc/extracted/';
 
   function frameSrc(n) {
     return BASE_PATH + String(n).padStart(3, '0') + '.jpg';
