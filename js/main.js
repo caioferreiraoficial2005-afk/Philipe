@@ -5,7 +5,10 @@
 /* ---- Scroll Frame Sequence ---- */
 (function () {
   var TOTAL_FRAMES = 100;
-  var BASE_PATH    = 'assets/frames_hero/extracted/';
+  var isMobile     = window.matchMedia('(max-width: 768px)').matches;
+  var BASE_PATH    = isMobile
+    ? 'assets/instalacao_celular/extracted/'
+    : 'assets/frames_hero/extracted/';
 
   function frameSrc(n) {
     return BASE_PATH + String(n).padStart(3, '0') + '.jpg';
